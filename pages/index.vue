@@ -20,16 +20,24 @@
               variant="outline-primary"
               @click="showUrlModal = true"
             >Set WS URL</b-button>
+            <b-button
+              variant="outline-success"
+              @click="initWsConnection"
+            >Reconnect</b-button>
+            <b-button
+              variant="outline-danger"
+              @click="closeWsConnection"
+            >Close connection</b-button>
 
             <b-button
               type="submit"
               variant="primary"
-              class="float-right ml-2"
+              class="float-right ml-1"
             >Submit</b-button>
             <b-button
               type="reset"
               variant="danger"
-              class="float-right ml-2"
+              class="float-right ml-1"
             >Clear</b-button>
           </div>
         </b-form>
@@ -79,7 +87,7 @@ export default {
     this.initWsConnection()
   },
   mounted() {
-    this.eventsData.push({ts: moment().format(), data: 'App init', _rowVariant: 'info'})
+    this.eventsData.push(this.addEvent(moment(), 'App init', 'info'))
   },
   methods: {
     sendToWs(ev) {
@@ -91,23 +99,55 @@ export default {
 
       this.ws.connection.send(this.sendText)
     },
+
     resetForm(ev) {
       ev.preventDefault()
       this.sendText = ''
     },
-    initWsConnection() {
+
+    initWsConnection(force=false) {
+      if (this.ws.connection && !force) return
+      if (force) this.closeWsConnection()
       console.log("Creating ws connection")
       this.ws.connection = new WebSocket(this.ws.url)
 
       /** @type ev MessageEvent **/
       this.ws.connection.onmessage = ev => {
         console.log("incoming ws msg", ev)
-        this.eventsData.push({ts: moment().format(), data: ev.data})
+        this.eventsData.push(this.addEvent(moment(), ev.data))
       }
 
       this.ws.connection.onopen = ev => {
         console.log("WS connection successfully established", ev)
+        this.eventsData.push(this.addEvent(moment(), 'WS connection established', 'success'))
       }
+
+      this.ws.connection.onclose = ev => {
+        console.log("WS connection closed", ev)
+        this.eventsData.push(this.addEvent(
+          moment(),
+          `WS closed (cod ${ev.code})${ev.reason ? ': '+ev.reason : ''}`, 'danger')
+        )
+      }
+    },
+
+    closeWsConnection() {
+      if (this.ws.connection != null) {
+        this.ws.connection.close()
+        this.ws.connection = null
+      }
+    },
+
+    /**
+     * @param datetime {moment.Moment}
+     * @param data {string}
+     * @param style {string}
+     */
+    addEvent(datetime, data, style=null) {
+      let msg = {ts: datetime.format(), data: data}
+      if (style) msg._rowVariant = style
+
+      return msg
     }
   }
 }
