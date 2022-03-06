@@ -49,6 +49,7 @@
       v-model="showUrlModal"
       title="Set WS URL"
       ok-only
+      @ok="initWsConnection"
     >
       <p>WebSocket URL</p>
       <b-form-input v-model="ws.url" type="url"></b-form-input>
@@ -75,18 +76,7 @@ export default {
     showUrlModal: false
   }),
   created() {
-    console.log("Creating ws connection")
-    this.ws.connection = new WebSocket(this.ws.url)
-
-    /** @type ev MessageEvent **/
-    this.ws.connection.onmessage = ev => {
-      console.log("incoming ws msg", ev)
-      this.eventsData.push({ts: moment().format(), data: ev.data})
-    }
-
-    this.ws.connection.onopen = ev => {
-      console.log("WS connection successfully established", ev)
-    }
+    this.initWsConnection()
   },
   mounted() {
     this.eventsData.push({ts: moment().format(), data: 'App init', _rowVariant: 'info'})
@@ -104,6 +94,20 @@ export default {
     resetForm(ev) {
       ev.preventDefault()
       this.sendText = ''
+    },
+    initWsConnection() {
+      console.log("Creating ws connection")
+      this.ws.connection = new WebSocket(this.ws.url)
+
+      /** @type ev MessageEvent **/
+      this.ws.connection.onmessage = ev => {
+        console.log("incoming ws msg", ev)
+        this.eventsData.push({ts: moment().format(), data: ev.data})
+      }
+
+      this.ws.connection.onopen = ev => {
+        console.log("WS connection successfully established", ev)
+      }
     }
   }
 }
