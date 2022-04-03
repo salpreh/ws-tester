@@ -1,4 +1,7 @@
 # ws-test
+Simple vue + nuxt app to test WebSockets
+
+<img src="https://raw.githubusercontent.com/salpreh/ws-tester/master/assets/webview.png" alt="tree_output">
 
 ## Build Setup
 
